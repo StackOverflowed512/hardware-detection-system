@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hardware Detection System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .image-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .image-box {
+            text-align: center;
+        }
+        .image-box img {
+            max-width: 500px;
+            max-height: 500px;
+        }
+        #results {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .upload-form {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ Hardware Detection System 🔩</h1>
+        
+        <div class="upload-form">
+            <input type="file" id="imageInput" accept="image/*">
+            <button onclick="uploadImage()">Upload & Detect</button>
+        </div>
+        
+        <div class="image-container">
+            <div class="image-box">
+                <h3>Original Image</h3>
+                <img id="originalImage">
+            </div>
+            <div class="image-box">
+                <h3>Detection Result</h3>
+                <img id="resultImage">
+            </div>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function uploadImage() {
+            const input = document.getElementById('imageInput');
+            const file = input.files[0];
+            if (!file) {
+                alert('Please select an image first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Display images
+                document.getElementById('originalImage').src = `/static/uploads/${data.original_image}`;
+                document.getElementById('resultImage').src = `/static/uploads/${data.result_image}`;
+
+                // Display results
+                const resultsDiv = document.getElementById('results');
+                let resultsHTML = `<h3>Detection Results (${data.items.length} items found):</h3><ul>`;
+                data.items.forEach(item => {
+                    resultsHTML += `<li>Item #${item.id}: ${item.type.toUpperCase()}<br>`;
+                    resultsHTML += `Dimensions: ${JSON.stringify(item.dimensions)}</li>`;
+                });
+                resultsHTML += '</ul>';
+                resultsDiv.innerHTML = resultsHTML;
+            })
+            .catch(error => {
+                alert('Error processing image: ' + error);
+            });
+        }
+    </script>
+</body>
+</html>
